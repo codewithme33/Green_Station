@@ -67,10 +67,10 @@ io.on('connection', (socket) => {
 });
 
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/stations', require('./routes/station'));
-app.use('/api/bookings', require('./routes/booking'));
-app.use('/api/points', require('./routes/point'));
+app.use('/api/auth', require('./routes/auth.js'));
+app.use('/api/stations', require('./routes/station.js'));
+app.use('/api/bookings', require('./routes/booking.js'));
+app.use('/api/points', require('./routes/point.js'));
 
 
 const PORT = process.env.PORT || 5000;

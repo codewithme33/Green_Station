@@ -1,11 +1,21 @@
-const Booking = require('../models/Booking');
-const Station = require('../models/Station');
+const Booking = require('../models/Booking.js');
+const Station = require('../models/Station.js');
 
-let ioInstance; 
+let ioInstance;
 
 exports.setSocketIo = (io) => { 
     ioInstance = io;
 };
+
+
+const calculateWaitTime = async (stationId) => {
+    const station = await Station.findById(stationId);
+    if (!station) return null;
+
+    const chargingTimePerEV = 30; 
+    return station.queueStatus * chargingTimePerEV;
+};
+
 
 exports.bookSlot = async (req, res) => {
     try {
@@ -23,25 +33,37 @@ exports.bookSlot = async (req, res) => {
         station.queueStatus += 1;
         await station.save();
 
+        const estimatedWaitTime = await calculateWaitTime(stationId);
+
         if (ioInstance) {
-            ioInstance.emit('queueUpdate', { stationId, queueStatus: station.queueStatus });
+            ioInstance.emit('queueUpdate', { 
+                stationId, 
+                queueStatus: station.queueStatus, 
+                estimatedWaitTime 
+            });
         }
 
-        res.status(201).json({ message: 'Slot booked successfully', booking });
+        res.status(201).json({ message: 'Slot booked successfully', booking, estimatedWaitTime });
     } catch (error) {
         res.status(500).json({ message: 'Error booking slot', error });
     }
 };
 
-exports.getUserBookings = async (req, res) => {
+
+exports.getEstimatedRefillTime = async (req, res) => {
     try {
-        const { userId } = req.params;
-        const bookings = await Booking.find({ userId }).populate('stationId');
-        res.json(bookings);
+        const { stationId } = req.params;
+        const estimatedWaitTime = await calculateWaitTime(stationId);
+
+        if (estimatedWaitTime === null) return res.status(404).json({ message: 'Station not found' });
+
+        res.json({ stationId, estimatedWaitTime });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching bookings', error });
+        res.status(500).json({ message: 'Error calculating refill time', error });
     }
 };
+
+
 
 exports.cancelBooking = async (req, res) => {
     try {
@@ -54,8 +76,15 @@ exports.cancelBooking = async (req, res) => {
         if (station) {
             station.queueStatus -= 1;
             await station.save();
+
+            const estimatedWaitTime = await calculateWaitTime(station._id);
+
             if (ioInstance) {
-                ioInstance.emit('queueUpdate', { stationId: station._id, queueStatus: station.queueStatus });
+                ioInstance.emit('queueUpdate', { 
+                    stationId: station._id, 
+                    queueStatus: station.queueStatus, 
+                    estimatedWaitTime 
+                });
             }
         }
 
@@ -64,3 +93,4 @@ exports.cancelBooking = async (req, res) => {
         res.status(500).json({ message: 'Error cancelling booking', error });
     }
 };
+
