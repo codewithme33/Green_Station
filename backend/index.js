@@ -9,22 +9,36 @@ const cookieParser = require('cookie-parser');
 const http = require('http');
 const socketIo = require('socket.io');
 
+
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+require("./config/passport"); 
+app.use(
+    session({
+        secret: process.env.CLIENT_SECRET,
+        resave: false,
+        saveUninitialized: true,
+    })
+);
+
+
+
 
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cookieParser());
-app.use(session({
-    secret: process.env.CLIENT_SECRET,
-    resave: false,
-    saveUninitialized: true
-}));
+app.use(
+    session({
+        secret: process.env.CLIENT_SECRET,
+        resave: false,
+        saveUninitialized: true,
+    })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
