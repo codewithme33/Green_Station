@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Navbar, Nav, Button } from "react-bootstrap";
+import { Container, Navbar, Nav} from "react-bootstrap";
 
 function NavigationBar() {
   return (
@@ -17,7 +17,7 @@ function NavigationBar() {
           </Nav>
           <Nav className="ms-3">
             <Nav.Link href="#" className="fw-bold">Sign In</Nav.Link>
-            <Button variant="success">Get Started</Button>
+            
           </Nav>
         </Navbar.Collapse>
       </Container>
