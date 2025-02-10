@@ -3,22 +3,19 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-import redMarkerIcon from "./redpin.png"; 
-import greenMarkerIcon from "./greenpin.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
 
 
 const userIcon = new L.Icon({
-  iconUrl: greenMarkerIcon,
-  shadowUrl: markerShadow,
+  iconUrl: process.env.PUBLIC_URL + "/assets/gps.png", // Reference from public folder
+  shadowUrl: process.env.PUBLIC_URL + "/assets/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
 
-
 const stationIcon = new L.Icon({
-  iconUrl: redMarkerIcon, 
-  shadowUrl: markerShadow,
+  iconUrl: process.env.PUBLIC_URL + "/assets/placeholder.png",
+  shadowUrl: process.env.PUBLIC_URL + "/assets/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
@@ -33,7 +30,6 @@ const EVMap = () => {
         const { latitude, longitude } = position.coords;
         setUserLocation({ lat: latitude, lng: longitude });
 
-        
         fetch(`http://localhost:5000/api/stations/nearby?latitude=${latitude}&longitude=${longitude}&maxDistance=5000`)
           .then((res) => res.json())
           .then((data) => setStations(data))
@@ -51,12 +47,12 @@ const EVMap = () => {
           <MapContainer center={[userLocation.lat, userLocation.lng]} zoom={13} style={{ height: "100%", width: "100%" }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-            {/* User Marker (Blue) */}
+            {/* User Marker (Green) */}
             <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
               <Popup>You are here</Popup>
             </Marker>
 
-            
+            {/* Nearby EV Stations (Red) */}
             {stations.map((station, index) => (
               <Marker key={index} position={[station.location.coordinates[1], station.location.coordinates[0]]} icon={stationIcon}>
                 <Popup>
