@@ -6,7 +6,7 @@ function NavigationBar() {
     <Navbar bg="white" expand="lg" className="shadow-sm">
       <Container>
         <Navbar.Brand href="Home" className="text-success fw-bold">
-         <img src="../Logo.png" alt="logo"/>GreenStation
+         <img src="./assets/Logo.png" alt="logo"/>GreenStation
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
