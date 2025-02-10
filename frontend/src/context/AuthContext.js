@@ -1,27 +1,32 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);
 
-    useEffect(() => {
-        axios.get("http://localhost:5000/api/auth/user", { withCredentials: true })
-            .then(res => setUser(res.data))
-            .catch(() => setUser(null));
-    }, []);
+  useEffect(() => {
+    
+    fetch("http://localhost:4005/api/auth/session", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) setUser(data.user);
+      });
+  }, []);
 
-    const logout = () => {
-        axios.get("http://localhost:5000/api/auth/logout", { withCredentials: true })
-            .then(() => setUser(null));
-    };
+  const logout = () => {
+    fetch("http://localhost:4005/api/auth/logout", { credentials: "include" })
+      .then(() => setUser(null));
+  };
 
-    return (
-        <AuthContext.Provider value={{ user, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ user, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const useAuth = () => useContext(AuthContext);
+
+export const useAuth = () => {
+  return useContext(AuthContext);
+};

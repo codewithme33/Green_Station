@@ -1,74 +1,47 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import axios from "axios";
+import io from "socket.io-client";
 
-
-
-
-const userIcon = new L.Icon({
-  iconUrl: process.env.PUBLIC_URL + "/assets/gps.png", // Reference from public folder
-  shadowUrl: process.env.PUBLIC_URL + "/assets/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-const stationIcon = new L.Icon({
-  iconUrl: process.env.PUBLIC_URL + "/assets/placeholder.png",
-  shadowUrl: process.env.PUBLIC_URL + "/assets/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+const socket = io(process.env.REACT_APP_BACKEND_URL);
 
 const EVMap = () => {
-  const [stations, setStations] = useState([]);
-  const [userLocation, setUserLocation] = useState(null);
+    const [stations, setStations] = useState([]);
 
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
+    useEffect(() => {
+        const fetchStations = async () => {
+            try {
+                const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/stations`);
+                setStations(res.data);
+            } catch (error) {
+                console.error("Error fetching stations:", error);
+            }
+        };
 
-        fetch(`http://localhost:5000/api/stations/nearby?latitude=${latitude}&longitude=${longitude}&maxDistance=5000`)
-          .then((res) => res.json())
-          .then((data) => setStations(data))
-          .catch((err) => console.error("Error fetching stations:", err));
-      },
-      (error) => console.error("Error getting location:", error),
-      { enableHighAccuracy: true }
-    );
-  }, []);
+        fetchStations();
 
-  return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
-      <div style={{ width: "60%", height: "60vh", borderRadius: "10px", overflow: "hidden", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)" }}>
-        {userLocation ? (
-          <MapContainer center={[userLocation.lat, userLocation.lng]} zoom={13} style={{ height: "100%", width: "100%" }}>
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        socket.on("queueUpdate", (data) => {
+            setStations((prevStations) =>
+                prevStations.map((station) =>
+                    station._id === data.stationId ? { ...station, queueStatus: data.queueStatus } : station
+                )
+            );
+        });
 
-            {/* User Marker (Green) */}
-            <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
-              <Popup>You are here</Popup>
-            </Marker>
+        return () => {
+            socket.off("queueUpdate");
+        };
+    }, []);
 
-            {/* Nearby EV Stations (Red) */}
-            {stations.map((station, index) => (
-              <Marker key={index} position={[station.location.coordinates[1], station.location.coordinates[0]]} icon={stationIcon}>
-                <Popup>
-                  <strong>{station.name}</strong> <br />
-                  {station.queueStatus > 0 ? `Queue: ${station.queueStatus}` : "No waiting"} <br />
-                  {station.hasGreenPoints ? "Green Points Available" : "No Green Points"}
-                </Popup>
-              </Marker>
+    return (
+        <div>
+            {stations.map((station) => (
+                <div key={station._id}>
+                    <h3>{station.name}</h3>
+                    <p>Queue Status: {station.queueStatus}</p>
+                </div>
             ))}
-          </MapContainer>
-        ) : (
-          <p style={{ textAlign: "center", paddingTop: "20px" }}>Loading map...</p>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default EVMap;
