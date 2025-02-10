@@ -28,7 +28,7 @@ function NavigationBar() {
               </>
             ) : (
               <a href="http://localhost:5000/api/auth/google">
-                <Button variant="success">Sign in with Google</Button>
+                <Button variant="success">Sign in</Button>
               </a>
             )}
           </Nav>
